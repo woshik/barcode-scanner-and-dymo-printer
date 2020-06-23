@@ -1,0 +1,10 @@
+table {
+  text-align: center;
+}
+
+@media (min-width: 1560px) {
+  .container, .container-lg, .container-md, .container-sm, .container-xl {
+    max-width: 1500px;
+  }
+}
+

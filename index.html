@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="./assets/image/barcode.png" type="image/x-icon">
+    <title>QR Code Printer</title>
+
+    <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">QR Code Printer</a>
+            <div class="form-inline my-2 my-lg-0" id="stop-start-process">
+                <input class="form-control mr-sm-2" type="input" value="1" placeholder="Amount of Label">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="button"
+                    onclick="processScanAndPrint(true, 1)">Start Scan</button>
+                <button class="btn btn-outline-danger my-2 my-sm-0 ml-2 active" type="button"
+                    onclick="processScanAndPrint(false, 2)">Stop Scan</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="container mt-5">
+        <div class="row">
+            <div class="col-9">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th width="10%" scope="col">#</th>
+                                <th width="45%" scope="col">IMEI No.</th>
+                                <th width="25%" scope="col">Label Printed</th>
+                                <th width="20%" scope="col">Complete</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="text-center mb-2">
+                    <button class="btn btn-outline-success mt-1" type="button" id="startPrintBtn">Start Print</button>
+                    <button class="btn btn-outline-danger mt-1 active" type="button" id="stopStopBtn">Stop Print</button>
+                </div>
+
+                <div class="form-group mb-2" >
+                    <select class="form-control" id="printersSelect">
+                        <option>Select Printer</option>
+                    </select>
+                </div>
+
+                <div class="card">
+                    <h5 class="card-header">Dymo Printer Log</h5>
+                    <div class="card-body" id="dymo-log-screen"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="./assets/js/dymo.connect.framework.js"></script>
+    <script src="./assets/js/main.js"></script>
+</body>
+
+</html>
