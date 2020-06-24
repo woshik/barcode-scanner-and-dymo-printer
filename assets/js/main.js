@@ -6,15 +6,17 @@ var IMEIcodes = [],
   printCount = 1,
   checkClickButton = 2,
   dymoLogScreen,
-  dymoLabel,
+  dymoLabel = null,
   loop = false,
   imeiIndex = 0,
-  printersSelect;
+  printersSelect,
+  labelFileLoadElement;
 
 window.addEventListener('DOMContentLoaded', function () {
   printersSelect = document.getElementById('printersSelect');
   dymoLogScreen = document.getElementById('dymo-log-screen');
   startAndStopProcessDOMElement = document.querySelectorAll('#stop-start-process button');
+  labelFileLoadElement = document.getElementById('load-label-file');
   processScanAndPrint(false, 2);
 });
 
@@ -30,6 +32,7 @@ function processScanAndPrint(isScanAndPrint, ck) {
       startAndStopProcessDOMElement[1].classList.add('active');
       startAndStopProcessDOMElement[0].classList.remove('active');
     }
+
     checkClickButton = ck;
   }
 }
@@ -41,27 +44,23 @@ function barcodeScanner(e) {
 
   if (barcode.length === 15) {
     IMEIcodes.push(barcode);
-    document.getElementsByTagName('tbody')[0].innerHTML += `
-      <tr id="IMEI-${IMEIcodes.length}">
-        <th scope="row">${IMEIcodes.length}</th>
-        <td>${barcode}</td>
-        <td></td>
-        <td></td>
-      </tr>
-    `;
+    document.getElementsByTagName('tbody')[0].innerHTML += '<tr id="IMEI-'
+      .concat(IMEIcodes.length, '"><th scope="row">')
+      .concat(IMEIcodes.length, '</th><td>')
+      .concat(barcode, '</td><td></td><td></td></tr>');
     barcode = '';
   }
 }
-
 /* =========================================================== DyMo Printer =============================================================== */
 
-// register onload event
 if (window.addEventListener) window.addEventListener('load', initDymo, false);
 else if (window.attachEvent) window.attachEvent('onload', initDymo);
 else window.onload = initDymo;
 
 function initDymo() {
   dymoLog('Dymo Version: ' + dymo.label.framework.VERSION);
+  labelFileLoadElement.addEventListener('change', loadDymoLabel);
+
   if (dymo.label.framework.init) {
     dymo.label.framework.init(loadDymoPrinter);
   } else {
@@ -71,84 +70,91 @@ function initDymo() {
 
 function loadDymoPrinter() {
   var printers = dymo.label.framework.getPrinters();
+
   if (printers.length == 0) {
     dymoLog('No DYMO printers are installed.');
     return;
   }
 
+  printersSelect.innerHTML = '';
+
   for (var i = 0; i < printers.length; i++) {
     var printerName = printers[i].name;
-
     var option = document.createElement('option');
     option.value = printerName;
     option.appendChild(document.createTextNode(printerName));
     printersSelect.appendChild(option);
   }
-
-  loadDymoLabel();
 }
 
-function loadDymoLabel() {
+function loadDymoLabel(event) {
   try {
-    var currentLoc = window.location.pathname;
-    var currentDir = currentLoc.substring(0, currentLoc.lastIndexOf('/'));
-    var labelDir = "/assets/layouts/LabelLayout.label";
-    var labelUri = "file:///" + currentDir + labelDir;
-    dymoLabel = dymo.label.framework.openLabelFile(labelUri);
+    var reader = new FileReader();
+
+    reader.onload = function () {
+      dymoLabel = dymo.label.framework.openLabelXml(reader.result);
+    };
+
+    document.getElementById('file-input-name-label').innerText = event.target.files[0].name;
+    reader.readAsText(event.target.files[0]);
   } catch (e) {
-    dymoLog(e.message || e);
+    console.log(e);
   }
 }
 
-async function startPrint() {
+function startPrint() {
   try {
     while (loop) {
       if (imeiIndex < IMEIcodes.length) {
-        let code = IMEIcodes[imeiIndex];
+        var code = IMEIcodes[imeiIndex];
         dymoLabel.setObjectText('IMEI_QRCODE', code);
         dymoLabel.setObjectText('IMEI_NUMER', code);
-
         var paramsXml = dymo.label.framework.createLabelWriterPrintParamsXml({
           copies: printCount,
           printQuality: dymo.label.framework.LabelWriterPrintQuality.Auto,
         });
-
         dymo.label.framework.printLabel(printersSelect.value, paramsXml, dymoLabel.getLabelXml());
-
-        var tableRow = document.getElementById(`IMEI-${imeiIndex + 1}`).children;
-
+        var tableRow = document.getElementById('IMEI-'.concat(imeiIndex + 1)).children;
         tableRow[2].innerText = printCount;
-        tableRow[3].innerHTML = `<img src="assets/image/correct.svg" width="20px">`;
-
+        tableRow[3].innerHTML = '<img src="assets/image/correct.svg" width="20px">';
         imeiIndex++;
       } else {
+        stopPrinting();
         break;
       }
     }
   } catch (e) {
-    dymoLog(e.message || e);
+    console.log(e);
   }
 }
 
-document.getElementById('startPrintBtn').addEventListener('click', (e) => {
-  if (loop !== true) {
-    loop = true;
-    e.target.classList.add('active');
-    e.target.parentElement.children[1].classList.remove('active');
-    startPrint();
+function startPrinting() {
+  if (!loop) {
+    if (dymoLabel !== null) {
+      if (imeiIndex < IMEIcodes.length) {
+        loop = true;
+        document.getElementById('start-printing-btn').classList.add('active');
+        document.getElementById('stop-printing-btn').classList.remove('active');
+        startPrint();
+      } else {
+        alert('Scan some bracode before printing');
+      }
+    } else {
+      alert('Please select a dymo label file');
+    }
   }
-});
+}
 
-document.getElementById('stopStopBtn').addEventListener('click', (e) => {
-  if (loop !== false) {
-    e.target.classList.add('active');
-    e.target.parentElement.children[0].classList.remove('active');
+function stopPrinting() {
+  if (loop) {
     loop = false;
+    document.getElementById('start-printing-btn').classList.remove('active');
+    document.getElementById('stop-printing-btn').classList.add('active');
   }
-});
+}
 
 function dymoLog(message) {
   if (message) {
-    dymoLogScreen.innerHTML += `<p class="card-text">${message}</p>`;
+    dymoLogScreen.innerHTML += '<p class="card-text">'.concat(message, '</p>');
   }
 }
