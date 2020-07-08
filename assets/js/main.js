@@ -109,10 +109,23 @@ function startPrint() {
         var code = IMEIcodes[imeiIndex];
         dymoLabel.setObjectText('IMEI_QRCODE', code);
         dymoLabel.setObjectText('IMEI_NUMER', code);
-        var paramsXml = dymo.label.framework.createLabelWriterPrintParamsXml({
-          copies: printCount,
-          printQuality: dymo.label.framework.LabelWriterPrintQuality.Auto,
-        });
+        var paramsXml = {};
+        if (printersSelect.value.match(/tape/gi)) {
+          paramsXml = dymo.label.framework.createTapePrintParamsXml({
+            copies: printCount,
+            flowDirection: dymo.label.framework.FlowDirection.LeftToRight,
+            alignment: dymo.label.framework.TapeAlignment.Center,
+            cutMode: dymo.label.framework.TapeCutMode.AutoCut,
+          });
+        } else {
+          paramsXml = dymo.label.framework.createLabelWriterPrintParamsXml({
+            copies: printCount,
+            printQuality: dymo.label.framework.LabelWriterPrintQuality.Auto,
+            flowDirection: dymo.label.framework.FlowDirection.LeftToRight,
+            twinTurboRoll: dymo.label.framework.TwinTurboRoll.Auto,
+          });
+        }
+
         dymo.label.framework.printLabel(printersSelect.value, paramsXml, dymoLabel.getLabelXml());
         var tableRow = document.getElementById('IMEI-'.concat(imeiIndex + 1)).children;
         tableRow[2].innerText = printCount;
@@ -125,6 +138,7 @@ function startPrint() {
     }
   } catch (e) {
     console.log(e);
+    dymoLog(e.message);
   }
 }
 
